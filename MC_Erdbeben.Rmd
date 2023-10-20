@@ -1,0 +1,124 @@
+---
+title: "R Notebook"
+# output: html_notebook
+---
+
+# Ausgangslage
+Für eine Versicherung soll ein News-Feed erstellt werden, welcher kontinuierlich die Erdbebendaten von der Internetseite herunter lädt, über die Pipeline aufbereitet und in einem Dashboard anzeigt.
+
+Die Daten werden von der Website https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php geladen
+
+```{r}
+# function to check if package is present
+install_if_not_present <- function(pkg_name){
+  if(!requireNamespace(pkg_name, quietly = TRUE)){
+    install.packages(pkg_name)
+  }
+}
+
+install_if_not_present("tidyverse")
+install_if_not_present("geojsonio")
+install_if_not_present("geojsonR")
+install_if_not_present("sf")
+install_if_not_present("tidyjson")
+install_if_not_present("jsonlite")
+install_if_not_present("lubridate")
+
+library(tidyverse)
+library(geojsonio)
+library(geojsonR)
+library(sf)
+library(tidyjson)
+library(jsonlite)
+library(lubridate)
+
+```
+
+Datei mit den stündlichen Daten laden
+
+```{r}
+past_hours_dump <- Dump_From_GeoJson("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson")
+cat(past_hours_dump)
+```
+```{r}
+past_hours <- fromJSON(past_hours_dump)
+```
+```{r}
+metadata <- past_hours$metadata
+metadata
+```
+
+```{r}
+features <- past_hours$features
+features
+```
+Koordinaten in einzelne Spalten aufteilen
+```{r}
+geometry <- features$geometry
+coordinates <- geometry$coordinates
+coordinates <- do.call(rbind, coordinates)
+colnames(coordinates) <- c("longitude", "latitude", "depth")
+
+```
+
+
+
+
+```{r}
+properties_df <- cbind(features$properties, coordinates)
+head(properties_df)
+```
+
+Spalten time und updated anpassen
+
+```{r}
+# properties_df <- properties_df %>% 
+basedate <- as.POSIXct("1970-01-01 00:00:00", tz = "UTC")
+
+properties_df <- properties_df %>% 
+  mutate(time = basedate + (time/ 1000)) %>% 
+  mutate(updated = basedate + (updated/1000))
+```
+
+Datenbeschrieb:
+rms: root-mean-square (RMS)
+Der quadratische Mittelwert (RMS) der Reisezeitresiduen in Sekunden unter Verwendung aller Gewichte ist ein Maß für die Übereinstimmung zwischen den beobachteten Ankunftszeiten und den vorhergesagten Ankunftszeiten an diesem Ort. Kleinere Werte deuten auf eine bessere Anpassung der Daten hin. Der Wert ist abhängig von der Genauigkeit des verwendeten Geschwindigkeitsmodells zur Berechnung der Erdbebenposition, der Gewichtung der Qualität der Ankunftszeitdaten und dem angewandten Verfahren zur Lokalisierung des Erdbebens.
+Typische Daten bewegen sich zwischen 0.13 ud 1.39
+
+nst: 
+Die Anzahl der Seismostationen, die zur Bestimmung des Standorts eines Erdbebens verwendet werden.
+
+dmin:
+Horizontale Entfernung in Grad vom Epizentrum zur nächstgelegenen Station. 1 Grad entspricht ungefähr 111,2 Kilometern. Im Allgemeinen gilt: Je geringer dieser Wert ist, desto zuverlässiger ist die berechnete Tiefe des Erdbebens.
+Typische Werte bewegen sich zwischen 0.4 und 7.1
+
+gap:
+Der größte azimutale Abstand zwischen benachbarten Stationen in Grad beeinflusst die Zuverlässigkeit der berechneten horizontalen Position des Erdbebens. Eine geringere Distanz bedeutet im Allgemeinen höhere Genauigkeit. Größere azimutale Lücken als 180 Grad zeigen in der Regel große Unsicherheiten in Bezug auf die Lage und Tiefe des Erdbebens.
+Typischer Wertebereich: 0-180
+
+magType:
+Die Methode oder der Algorithmus, der zur Berechnung der bevorzugten Größenordnung des Ereignisses verwendet wird.
+Werte: “Md”, “Ml”, “Ms”, “Mw”, “Me”, “Mi”, “Mb”, “MLg”
+Hier werden diese Typen genauer beschrieben: https://www.usgs.gov/programs/earthquake-hazards/magnitude-types
+
+tz:
+Zeitzonenabweichung von der UTC in Minuten am Epizentrum des Ereignisses.
+
+net:
+Die ID eines Datenlieferanten. Kennzeichnet das Netz, das als bevorzugte Informationsquelle für dieses Ereignis gilt.
+Werte: ak, at, ci, hv, ld, mb, nc, nm, nn, pr, pt, se, us, uu, uw
+
+sig:
+Eine Bewertungszahl, die die Bedeutung eines Ereignisses anzeigt. Je höher die Zahl, desto bedeutender das Ereignis.  Dieser Wert wird anhand einer Reihe von Faktoren wie Ausmaß, maximaler MMI, berichteten Empfindungen und geschätzten Auswirkungen ermittelt.
+
+ids:
+Eine durch Kommata getrennte Liste von Ereignis-IDs, die mit einem Ereignis verknüpft sind.
+
+code:
+Ein von der entsprechenden Quelle für das Ereignis zugewiesener - und eindeutiger - Identifizierungscode.
+
+sources:
+Eine durch Kommata getrennte Liste von Netzwerkteilnehmern.
+```{r}
+bbox <- past_hours$bbox
+```
