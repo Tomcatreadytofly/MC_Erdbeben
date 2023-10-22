@@ -41,10 +41,10 @@ past_hours_dump <- Dump_From_GeoJson("https://earthquake.usgs.gov/earthquakes/fe
 cat(past_hours_dump)
 ```
 ```{r}
-past_hours <- fromJSON(past_hours_dump)
+past_hours_js <- fromJSON(past_hours_dump)
 ```
 ```{r}
-metadata <- past_hours$metadata
+metadata <- past_hours_js$metadata
 metadata
 ```
 
@@ -81,6 +81,19 @@ properties_df <- properties_df %>%
 ```
 
 Datenbeschrieb:
+
+mag: 
+Werte von -1 bis 10
+Die angegebene Stärke ist diejenige, die der U.S. Geological Survey für dieses Erdbeben als offiziell ansieht, und war die beste verfügbare Schätzung der Größe des Erdbebens zum Zeitpunkt der Erstellung dieser Seite. Andere Magnituden, die mit den von hier aus verlinkten Webseiten verbunden sind, wurden zu verschiedenen Zeitpunkten nach dem Erdbeben mit verschiedenen Arten von seismischen Daten ermittelt. Obwohl es sich dabei um legitime Schätzungen der Stärke handelt, betrachtet der U.S. Geological Survey sie nicht als die bevorzugte "offizielle" Stärke für das Ereignis.
+
+Die Erdbebenstärke ist ein Maß für die Größe eines Erdbebens an seinem Ursprung. Es handelt sich um ein logarithmisches Maß. Bei gleichem Abstand vom Erdbeben ist die Amplitude der seismischen Wellen, aus denen die Magnitude bestimmt wird, bei einem Erdbeben der Magnitude 5 etwa zehnmal so groß wie bei einem Erdbeben der Magnitude 4. Die Gesamtenergiemenge, die durch das Erdbeben freigesetzt wird, steigt in der Regel um einen größeren Faktor: Bei vielen gebräuchlichen Magnitudenarten steigt die Gesamtenergie eines durchschnittlichen Erdbebens um einen Faktor von etwa 32 für jede Einheit, um die die Magnitude zunimmt.
+
+Es gibt verschiedene Möglichkeiten, die Magnitude aus Seismogrammen zu berechnen. Die verschiedenen Methoden sind für unterschiedliche Erdbebengrößen und unterschiedliche Entfernungen zwischen der Erdbebenquelle und der Aufzeichnungsstation geeignet. Die verschiedenen Magnituden-Typen sind in der Regel so definiert, dass die Magnitudenwerte für Erdbeben in einem mittleren Bereich der aufgezeichneten Erdbebengrößen innerhalb weniger Zehntel einer Magnitudeneinheit übereinstimmen, aber die verschiedenen Magnituden-Typen können Werte aufweisen, die sich für sehr große und sehr kleine Erdbeben sowie für einige spezifische Klassen seismischer Quellen um mehr als eine Magnitudeneinheit unterscheiden. Dies ist darauf zurückzuführen, dass Erdbeben in der Regel komplexe Ereignisse sind, bei denen im Zuge des Verwerfungs- oder Bruchprozesses Energie in einem breiten Frequenzbereich und in unterschiedlicher Stärke freigesetzt wird. Die verschiedenen Arten von Magnituden messen unterschiedliche Aspekte der seismischen Strahlung (z. B. niederfrequente Energie gegenüber hochfrequenter Energie). Die Beziehung zwischen den Werten der verschiedenen Magnitudenarten, die einem bestimmten seismischen Ereignis zugeordnet werden, kann dem Seismologen ein besseres Verständnis der Prozesse im Brennpunkt des seismischen Ereignisses ermöglichen. Die verschiedenen Magnituden-Typen sind nicht alle gleichzeitig für ein bestimmtes Erdbeben verfügbar.
+
+Manchmal werden vorläufige Größenordnungen auf der Grundlage unvollständiger, aber schnell verfügbarer Daten geschätzt und gemeldet. Beispielsweise berechnen die Tsunami-Warnzentren eine vorläufige Magnitude und den Ort eines Ereignisses, sobald genügend Daten für eine Schätzung vorliegen. In diesem Fall ist die Zeit von entscheidender Bedeutung, um eine Warnung auszusenden, wenn durch das Ereignis wahrscheinlich Tsunami-Wellen ausgelöst werden. Solche vorläufigen Magnituden werden durch verbesserte Schätzungen der Magnitude ersetzt, sobald mehr Daten zur Verfügung stehen.
+
+Bei großen Erdbeben der heutigen Zeit ist die Magnitude, die letztlich als bevorzugte Magnitude für die Berichterstattung an die Öffentlichkeit ausgewählt wird, in der Regel eine Momentmagnitude, die auf dem skalaren seismischen Moment eines Erdbebens basiert, das durch Berechnung des seismischen Momenttensors bestimmt wird, der den Charakter der vom Erdbeben erzeugten seismischen Wellen am besten wiedergibt. Das skalare seismische Moment, ein Parameter des seismischen Momententensors, kann auch über das multiplikative Produkt Steifigkeit des gestörten Gesteins x Bruchfläche x durchschnittliche Verwerfungsverschiebung während des Erdbebens geschätzt werden.
+
 rms: root-mean-square (RMS)
 Der quadratische Mittelwert (RMS) der Reisezeitresiduen in Sekunden unter Verwendung aller Gewichte ist ein Maß für die Übereinstimmung zwischen den beobachteten Ankunftszeiten und den vorhergesagten Ankunftszeiten an diesem Ort. Kleinere Werte deuten auf eine bessere Anpassung der Daten hin. Der Wert ist abhängig von der Genauigkeit des verwendeten Geschwindigkeitsmodells zur Berechnung der Erdbebenposition, der Gewichtung der Qualität der Ankunftszeitdaten und dem angewandten Verfahren zur Lokalisierung des Erdbebens.
 Typische Daten bewegen sich zwischen 0.13 ud 1.39
@@ -119,6 +132,45 @@ Ein von der entsprechenden Quelle für das Ereignis zugewiesener - und eindeutig
 
 sources:
 Eine durch Kommata getrennte Liste von Netzwerkteilnehmern.
+
+tsunami:
+Dieses Flag wird bei großen Ereignissen in ozeanischen Regionen auf "1" gesetzt und ansonsten auf "0". Das Vorhandensein oder der Wert dieses Flags sagt nichts darüber aus, ob tatsächlich ein Tsunami aufgetreten ist oder auftreten wird. Wenn das Flag den Wert "1" hat, enthält das Ereignis einen Link zur NOAA Tsunami-Website für Tsunami-Informationen. 
+
+felt:
+Die Gesamtzahl der an das DYFI-System übermittelten Spürmeldungen.
+Did You Feel It? (DYFI) sammelt Informationen von Menschen, die ein Erdbeben gespürt haben, und erstellt Karten, die zeigen, was die Menschen erlebt haben und wie groß die Schäden sind.
+Werte zwischen 44 und 843
+
+cdi:
+Die höchste gemeldete Intensität für das Ereignis. Berechnet von DYFI. 
+Werte von 0-10
+
+mmi:
+Die maximale geschätzte instrumentelle Intensität für das Ereignis. Berechnet von ShakeMap.
+ShakeMap ist ein Produkt des USGS Earthquake Hazards Program in Verbindung mit den regionalen seismischen Netzen. ShakeMaps liefern nahezu in Echtzeit Karten der Bodenbewegungen und der Erschütterungsintensität nach schweren Erdbeben. Diese Karten werden von öffentlichen und privaten Organisationen auf Bundes-, Landes- und Kommunalebene für die Reaktion und den Wiederaufbau nach einem Erdbeben, für öffentliche und wissenschaftliche Informationen sowie für Bereitschaftsübungen und Katastrophenplanung verwendet.
+Werte von 0-10
+
+alert:
+Die Alarmstufe der PAGER-Skala für Erdbebenauswirkungen.
+Mögliche Werte: “green”, “yellow”, “orange”, “red”.
+
+status:
+Zeigt an, ob das Ereignis von einem Menschen überprüft wurde.
+Der Status ist entweder automatisch oder geprüft. Automatische Ereignisse werden direkt von automatischen Verarbeitungssystemen gebucht und wurden nicht von einem Menschen überprüft oder geändert. Überprüfte Ereignisse wurden von einem Menschen geprüft. Der Grad der Überprüfung kann von einer schnellen Gültigkeitsprüfung bis hin zu einer sorgfältigen Neuanalyse des Ereignisses reichen.
+Mögliche Werte: “automatic”, “reviewed”, “deleted”
+
+type:
+Art des seismischen Ereignisses."Erdbeben", "Steinbruch"
+Typische Werte: “earthquake”, “quarry”
+
+
+
+Falls in den Spalten 1-4 sowie 27 und 28 fehlende Werte vorhanden sind, ist eine Verwendung dieser Observationen nicht sinnvoll. Deshalb werden diese Observationen aus dem Datensatz entfernt.
+```{r}
+properties_df <- properties_df %>% 
+  drop_na(mag, place, time, updated, type, longitude, latitude, code)
+```
+
 ```{r}
 bbox <- past_hours$bbox
 ```

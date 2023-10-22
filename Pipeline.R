@@ -1,3 +1,27 @@
+# load mandatory packages
+
+# function to check if package is present
+install_if_not_present <- function(pkg_name){
+  if(!requireNamespace(pkg_name, quietly = TRUE)){
+    install.packages(pkg_name)
+  }
+}
+
+install_if_not_present("tidyverse")
+install_if_not_present("geojsonR")
+# install_if_not_present("sf")
+# install_if_not_present("tidyjson")
+install_if_not_present("jsonlite")
+install_if_not_present("lubridate")
+
+library(tidyverse)
+library(geojsonR)
+# library(sf)
+# library(tidyjson)
+library(jsonlite)
+library(lubridate)
+
+
 # create variables for different periodes
 past_hours <- "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
 past_day <- "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
