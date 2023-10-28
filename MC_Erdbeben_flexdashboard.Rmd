@@ -1,5 +1,13 @@
-# load mandatory packages
+---
+title: "Erdbeben Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny
+---
 
+```{r setup, include=FALSE}
 # function to check if package is present
 install_if_not_present <- function(pkg_name){
   if(!requireNamespace(pkg_name, quietly = TRUE)){
@@ -9,23 +17,21 @@ install_if_not_present <- function(pkg_name){
 
 install_if_not_present("tidyverse")
 install_if_not_present("geojsonR")
-# install_if_not_present("sf")
-# install_if_not_present("tidyjson")
 install_if_not_present("jsonlite")
 install_if_not_present("lubridate")
 install_if_not_present("leaflet")
+install_if_not_present("flexdashboard")
+install_if_not_present("shiny")
 
 library(tidyverse)
 library(geojsonR)
-# library(sf)
-# library(tidyjson)
 library(jsonlite)
 library(lubridate)
 library(leaflet)
-
+library(flexdashboard)
+library(shiny)
 
 # create variables for different periodes
-past_hours <- "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
 past_day <- "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
 past_week <- "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 past_month <- "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson"
@@ -37,13 +43,6 @@ pipeline <- function(geojson_file) {
       
       # convert to JSON
       js <- fromJSON(dump)
-      
-      # extract metadata
-      metadata <- js$metadata
-      
-      # extract bbox
-      bbox <- js$bbox
-      bbox <- data.frame(bbox, coord = c("lon_min", "lat_min", "depth_min", "lon_max", "lat_max", "depth_max"))
       
       # extract features
       features <- js$features
@@ -70,42 +69,70 @@ pipeline <- function(geojson_file) {
         filter(between(lon, -180, 180),
                between(lat, -90, 90),
                between(depth, 0, 1000),
-               between(mag, -1, 10))
-      
-      # convert metadata info generated int datetime
-      metadata$generated <- basedate + (metadata$generated/1000)
+               between(mag, 5, 10))
       
       # drop NA for mandatory fields
       properties <- properties %>% 
         drop_na(mag, place, time, updated, type, lon, lat, code)
-      
-      # return list with prepared data
-      list(properties_df = properties, metadata_obj = metadata, bbox_obj = bbox)
+   
+      # # return list with prepared data
+      # list(properties_df = properties, metadata_obj = metadata, bbox_obj = bbox)
+      return(properties)
 
 }
 
-# results <- pipeline(past_hours)
-results <- pipeline(past_day)
-# results <- pipeline(past_week)
-# results <- pipeline(past_month)
+```
 
-properties <- results$properties_df
-bbox <- results$bbox_obj
-metadata <- results$metadata_obj
-bbox_wider <- pivot_wider(bbox, names_from = coord, values_from = bbox)
+Column {.sidebar}
+-----------------------------------------------------------------------
 
-leaflet(properties) %>% 
-  addTiles() %>% 
-  addCircleMarkers(
-    lat = ~lat,
-    lng = ~lon,
-    radius = ~mag *2,  # GrC6Ce der Punkte nach Magnitude
-    fillColor = ~colorQuantile("YlOrRd", mag)(mag),  # Farbschema
-    color = "#000000",  # Umrandungsfarbe
-    weight = 1,  # Umrandungsdicke
-    opacity = 1,  # Umrandungstransparenz
-    fillOpacity = 0.7,  # FC<lltransparenz
-    popup = ~paste("Ort:", place, "<br>Magnitude:", round(mag, 4), "<br>Tiefe:", round(properties$depth, 2), "km")  # Popup-Info
-  )
+#### Daten Auswahl
 
+```{r}
+
+selectInput("data_choice",
+            "Wählen Sie den Zeitraum der Erdbeben aus:",
+            choices = c("24 Stunden", "7 Tage", "1 Monat"))
+
+data_selected <- reactive({
+  # update all 10 min
+  invalidateLater(600000)
+  
+  switch(input$data_choice,
+         "24 Stunden" = past_day,
+         "7 Tage" = past_week,
+         "1 Monat" = past_month)
+})
+
+```
+Column {data-hight=800}
+-----------------------------------------------------------------------
+#### Erdbeben mit einer Magnitude grösser als 5
+
+```{r}
+output$map <- renderLeaflet({
+  
+  data_to_plot <- pipeline(data_selected())
+  
+  leaflet(data_to_plot) %>%
+    addTiles() %>%
+    addCircleMarkers(
+      lat = ~lat,
+      lng = ~lon,
+      radius = ~mag *2,
+      fillColor = ~colorQuantile("YlOrRd", mag)(mag),
+      color = "#000000",
+      weight = 1,
+      opacity = 1,
+      fillOpacity = 0.7,
+      popup = ~paste("Ort:", place,
+                     "<br>Datum:", time,
+                     "<br>Magnitude:", round(mag, 4), 
+                     "<br>Tiefe:", round(depth, 2))
+    )
+})
+
+leafletOutput("map")
+
+```
 
