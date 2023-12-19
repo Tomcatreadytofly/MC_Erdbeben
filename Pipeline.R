@@ -70,7 +70,7 @@ pipeline <- function(geojson_file) {
         filter(between(lon, -180, 180),
                between(lat, -90, 90),
                between(depth, 0, 1000),
-               between(mag, -1, 10))
+               between(mag, 5, 10))
       
       # convert metadata info generated int datetime
       metadata$generated <- basedate + (metadata$generated/1000)
@@ -85,8 +85,8 @@ pipeline <- function(geojson_file) {
 }
 
 # results <- pipeline(past_hours)
-results <- pipeline(past_day)
-# results <- pipeline(past_week)
+# results <- pipeline(past_day)
+results <- pipeline(past_week)
 # results <- pipeline(past_month)
 
 properties <- results$properties_df
@@ -99,12 +99,12 @@ leaflet(properties) %>%
   addCircleMarkers(
     lat = ~lat,
     lng = ~lon,
-    radius = ~mag *2,  # GrC6Ce der Punkte nach Magnitude
+    radius = ~mag *2,  # Groesse der Punkte nach Magnitude
     fillColor = ~colorQuantile("YlOrRd", mag)(mag),  # Farbschema
     color = "#000000",  # Umrandungsfarbe
     weight = 1,  # Umrandungsdicke
     opacity = 1,  # Umrandungstransparenz
-    fillOpacity = 0.7,  # FC<lltransparenz
+    fillOpacity = 0.7,  # Fuelltransparenz
     popup = ~paste("Ort:", place, "<br>Magnitude:", round(mag, 4), "<br>Tiefe:", round(properties$depth, 2), "km")  # Popup-Info
   )
 

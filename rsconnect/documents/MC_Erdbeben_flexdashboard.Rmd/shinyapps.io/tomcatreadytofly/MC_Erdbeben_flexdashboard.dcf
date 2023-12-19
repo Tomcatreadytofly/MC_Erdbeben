@@ -5,7 +5,7 @@ account: tomcatreadytofly
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10344262
-bundleId: 7865156
+bundleId: 8064800
 url: https://tomcatreadytofly.shinyapps.io/MC_Erdbeben_flexdashboard/
 version: 1
 asMultiple: FALSE

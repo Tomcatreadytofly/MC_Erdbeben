@@ -113,14 +113,19 @@ Column {data-hight=800}
 output$map <- renderLeaflet({
   
   data_to_plot <- pipeline(data_selected())
-  
+
+  if(nrow(data_to_plot) == 0){
+    leaflet() %>%
+        addTiles() %>%
+        addMarkers(lng = 0, lat = 0, popup = "Keine Daten vorhanden")
+  } else {
   leaflet(data_to_plot) %>%
     addTiles() %>%
     addCircleMarkers(
       lat = ~lat,
       lng = ~lon,
       radius = ~mag *2,
-      fillColor = ~colorQuantile("YlOrRd", mag)(mag),
+      fillColor = ~colorNumeric("YlOrRd", mag)(mag),
       color = "#000000",
       weight = 1,
       opacity = 1,
@@ -130,6 +135,7 @@ output$map <- renderLeaflet({
                      "<br>Magnitude:", round(mag, 4), 
                      "<br>Tiefe:", round(depth, 2))
     )
+  }
 })
 
 leafletOutput("map")
